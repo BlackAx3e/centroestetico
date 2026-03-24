@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Centro Estetico Stile di Vita</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" type="image/png" href="favicon.png">
+  <style>
+    /* ── HAMBURGER MENU ─────────────────────────────────────────── */
+
+    .nav {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      left: auto;
+      z-index: 50;
+      pointer-events: none;
+    }
+
+    /* Hamburger button */
+    .hamburger-btn {
+      pointer-events: auto;
+      width: 56px;
+      height: 56px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.72);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      box-shadow: 0 10px 30px rgba(134, 51, 88, 0.12);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      position: relative;
+      z-index: 52;
+      margin-left: auto;
+    }
+
+    .hamburger-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 14px 36px rgba(255, 79, 154, 0.22);
+    }
+
+    .hamburger-btn .bar {
+      width: 22px;
+      height: 2px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--pink-dark), var(--pink));
+      transition: transform 0.35s cubic-bezier(.4,0,.2,1), opacity 0.25s ease, width 0.3s ease;
+      transform-origin: center;
+    }
+
+    /* Animated X state */
+    .hamburger-btn.open .bar:nth-child(1) {
+      transform: translateY(7px) rotate(45deg);
+    }
+    .hamburger-btn.open .bar:nth-child(2) {
+      opacity: 0;
+      width: 0;
+    }
+    .hamburger-btn.open .bar:nth-child(3) {
+      transform: translateY(-7px) rotate(-45deg);
+    }
+
+    /* Fullscreen overlay */
+    .menu-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 49;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .menu-overlay.open {
+      pointer-events: auto;
+      opacity: 1;
+    }
+
+    /* Backdrop blur + tinted bg */
+    .menu-overlay::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 240, 248, 0.82);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+    }
+
+    /* Decorative orb inside menu */
+    .menu-overlay::after {
+      content: "";
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), rgba(255, 130, 178, 0.55) 40%, transparent 70%);
+      top: -120px;
+      right: -100px;
+      pointer-events: none;
+    }
+
+    .menu-inner {
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 0 clamp(32px, 8vw, 100px);
+    }
+
+    /* Brand inside menu */
+    .menu-brand {
+      top: 24px;
+      left: clamp(24px, 6vw, 80px);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      text-decoration: none;
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: opacity 0.4s ease 0.15s, transform 0.4s ease 0.15s;
+    }
+
+    .menu-overlay.open .menu-brand {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .menu-brand .brand-mark {
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      color: white;
+      background: linear-gradient(135deg, #ff7ab9, #ff4f9a 55%, #d92f78);
+      box-shadow: 0 14px 28px rgba(255, 79, 154, 0.33);
+    }
+
+    /* Nav links list */
+    .menu-links {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .menu-links li {
+      overflow: hidden;
+    }
+
+    .menu-links a {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      font-size: clamp(2.4rem, 6vw, 5rem);
+      font-weight: 800;
+      letter-spacing: -0.05em;
+      color: var(--text);
+      text-decoration: none;
+      line-height: 1.1;
+      padding: 6px 0;
+      transition: color 0.2s ease;
+      opacity: 0;
+      transform: translateX(-40px);
+      transition: opacity 0.4s ease, transform 0.4s cubic-bezier(.2,.8,.2,1), color 0.2s ease;
+    }
+
+    .menu-overlay.open .menu-links li:nth-child(1) a { opacity: 1; transform: translateX(0); transition-delay: 0.1s; }
+    .menu-overlay.open .menu-links li:nth-child(2) a { opacity: 1; transform: translateX(0); transition-delay: 0.17s; }
+    .menu-overlay.open .menu-links li:nth-child(3) a { opacity: 1; transform: translateX(0); transition-delay: 0.24s; }
+
+    .menu-links a .link-num {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--pink);
+      letter-spacing: 0;
+      align-self: flex-start;
+      margin-top: 10px;
+      opacity: 0.7;
+    }
+
+    .menu-links a:hover {
+      color: var(--pink-dark);
+    }
+
+    .menu-links a::after {
+      display: none;
+    }
+
+    /* Divider line */
+    .menu-divider {
+      width: 0;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(255, 79, 154, 0.3), transparent);
+      margin: 20px 0;
+      transition: width 0.6s ease 0.3s;
+    }
+
+    .menu-overlay.open .menu-divider {
+      width: min(500px, 80vw);
+    }
+
+    /* Bottom CTA inside menu */
+    .menu-cta-row {
+      opacity: 0;
+      transform: translateY(14px);
+      transition: opacity 0.4s ease 0.35s, transform 0.4s ease 0.35s;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .menu-overlay.open .menu-cta-row {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .menu-meta {
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    /* Close on backdrop click area */
+    .menu-backdrop-close {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+
+    .menu-inner > *:not(.menu-backdrop-close) {
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="progress"><span id="progressBar"></span></div>
+  <div class="cursor-glow" id="glow"></div>
+
+  <!-- HAMBURGER BUTTON -->
+  <header class="nav">
+    <button class="hamburger-btn" id="hamburgerBtn" aria-label="Apri menu" aria-expanded="false">
+      <span class="bar"></span>
+      <span class="bar"></span>
+      <span class="bar"></span>
+    </button>
+  </header>
+
+  <!-- FULLSCREEN MENU OVERLAY -->
+  <div class="menu-overlay" id="menuOverlay" role="dialog" aria-modal="true" aria-label="Menu di navigazione">
+    <div class="menu-backdrop-close" id="menuBackdropClose"></div>
+    <div class="menu-inner">
+
+      <a class="menu-brand" href="#top" id="menuBrandLink">
+        <div class="brand-mark">✦</div>
+        <img style="height: 37px;" src="logo.png" alt="Stile di Vita" class="logo" />
+      </a>
+
+      <nav>
+        <ul class="menu-links">
+          <li>
+            <a href="#servizi" class="menu-link-item">
+              <span class="link-num">01</span>Servizi
+            </a>
+          </li>
+          <li>
+            <a href="#testimonianze" class="menu-link-item">
+              <span class="link-num">02</span>Testimonianze
+            </a>
+          </li>
+          <li>
+            <a href="#contatti" class="menu-link-item">
+              <span class="link-num">03</span>Contatti
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="menu-divider"></div>
+
+      <div class="menu-cta-row">
+        <a class="cta" href="tel:+390123456789">Chiama per prenotare</a>
+        <div class="menu-meta">
+          Lun – Sab · 09:00 – 19:30<br>
+          Seregno (MB), Italia
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <main id="top">
+    <section class="hero">
+      <div class="hero-parallax" aria-hidden="true">
+        <div class="orb one floating" data-speed="0.18"></div>
+        <div class="orb two floating delay" data-speed="0.1"></div>
+        <div class="orb three floating" data-speed="0.14"></div>
+      </div>
+
+      <div class="container hero-grid">
+        <div>
+          <div class="eyebrow reveal">Bellezza, benessere e armonia</div>
+          <h1 class="reveal"><span class="gradient-text">Centro Estetico</span><br />Stile di Vita</h1>
+          <p class="lead reveal">Centro estetico specializzato in trattamenti personalizzati per viso e corpo. Ogni percorso nasce dall'ascolto delle tue esigenze, per offrirti risultati visibili e duraturi in un ambiente rilassante e professionale.</p>
+
+          <div class="hero-actions reveal">
+            <a class="cta" href="tel:+390123456789">Prenota la tua consulenza</a>
+            <a class="cta secondary" href="#percorso">Vivi l'esperienza</a>
+          </div>
+
+          <div class="stats reveal">
+            <div class="stat">
+              <strong>+1200</strong>
+              <span>clienti soddisfatte</span>
+            </div>
+            <div class="stat">
+              <strong>6</strong>
+              <span>anni di esperienza</span>
+            </div>
+            <div class="stat">
+              <strong>100%</strong>
+              <span>attenzione su misura</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-card glass tilt reveal" id="heroCard">
+          <div class="hero-media">
+            <div class="top-chip-row">
+              <div class="chip">Glow viso</div>
+              <div class="chip">Body ritual</div>
+              <div class="chip">Nails & spa</div>
+            </div>
+
+            <div class="mirror">
+              <div class="product">
+                <div class="product-logo">✿</div>
+              </div>
+            </div>
+
+            <div class="floating-note">
+              <strong>Rituale signature</strong>
+              Trattamenti rosa, luci soffuse e risultati visibili fin dal primo appuntamento.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="servizi">
+      <div class="container">
+        <div class="section-head reveal">
+          <div>
+            <div class="badge">I nostri servizi</div>
+            <h2>Cosa offriamo?</h2>
+          </div>
+          <p class="sub">Offriamo trattamenti studiati per valorizzare la tua bellezza naturale, con percorsi personalizzati pensati per risultati concreti e duraturi.</p>
+        </div>
+
+        <div class="bento">
+          <article class="card feature large reveal">
+            <div class="icon">✦</div>
+            <h3>Trattamenti viso personalizzati</h3>
+            <p>Analisi della pelle e protocolli su misura per idratazione, anti-age e luminosità.</p>
+          </article>
+
+          <article class="card feature small reveal">
+            <div class="icon">♡</div>
+            <h3>Trattamenti corpo</h3>
+            <p>Percorsi modellanti e drenanti studiati in base al tuo stile di vita e ai tuoi obiettivi.</p>
+          </article>
+
+          <article class="card feature half reveal">
+            <div class="icon">✧</div>
+            <h3>Consulenza estetica</h3>
+            <p>Valutazione iniziale per creare un percorso personalizzato e davvero efficace.</p>
+          </article>
+
+          <article class="card feature half reveal">
+            <div class="icon">☾</div>
+            <h3>Nails, mani e piedi</h3>
+            <p>Manicure e pedicure curate in ogni dettaglio, con un tocco glam che completa l'esperienza del centro con stile e precisione.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="testimonianze">
+      <div class="container">
+        <div class="section-head reveal">
+          <div>
+            <div class="badge">Testimonianze</div>
+            <h2>La fiducia nasce dall'esperienza.</h2>
+          </div>
+          <p class="sub">Le nostre clienti raccontano esperienze autentiche fatte di risultati visibili e momenti di puro relax.</p>
+        </div>
+
+        <div class="quote-grid">
+          <article class="card testimonial reveal">
+            <div>
+              <div class="avatar"></div>
+              <h3>"Molto soddisfatta del servizio"</h3>
+              <p>Oggi sono stata per la prima volta al centro estetico di Giulia 
+                per una manicure con semipermanente riforzato. 
+                Giulia è una ragazza solare, disponibile e gentilissima, 
+                ti mette subito a tuo agio ed è inoltre molto professionale. 
+                Molto attenta ai dettagli, alla cura e al benessere del cliente. 
+                Si vede che ama il proprio lavoro! Tornerò sicuramente 😊</p>
+            </div>
+            <strong style="color:var(--pink-dark);">Martina</strong>
+          </article>
+
+          <article class="card testimonial reveal">
+            <div>
+              <div class="avatar"></div>
+              <h3>"Personale gentile e preparato, mi sono trovato benissimo."</h3>
+              <p>Era la mia prima volta da Stile di Vita e mi sono trovato benissimo!
+                 Personale gentile, ambiente curato e trattamento fantastico. 
+                 Tornerò di sicuro! Consigliato!</p>
+            </div>
+            <strong style="color:var(--pink-dark);">Omar C</strong>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section instagram" id="instagram">
+  <div class="container">
+
+    <div class="section-head reveal">
+      <div>
+        <div class="badge">Instagram</div>
+        <h2>Seguici su Instagram</h2>
+      </div>
+      <p class="sub">
+        Scopri i nostri trattamenti, risultati reali e momenti dal centro estetico.
+      </p>
+    </div>
+
+    <div class="instagram-feed">
+      <a href="https://www.instagram.com/p/DVykUNmDMhu/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==" target="_blank">
+        <img src="insta1.webp" alt="Instagram post 1" />
+      </a>
+      <a href="https://www.instagram.com/p/DVwRX4Bjb82/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==" target="_blank">
+        <img src="insta2.webp" alt="Instagram post 2" />
+      </a>
+      <a href="https://www.instagram.com/p/DOHA5k8DZ9o/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==" target="_blank">
+          <img src="insta3.webp" alt="Instagram post 3" />
+      </a>
+    </div>
+
+    <div style="text-align: center; margin-top: 5em;">
+      <a class="cta" href="https://www.instagram.com/centroestetico_stiledivita" target="_blank">
+        Vai al profilo Instagram
+      </a>
+    </div>
+
+  </div>
+</section>
+
+    <section class="section" id="contatti">
+      <div class="container">
+        <div class="section-head reveal">
+          <div>
+            <div class="badge">Contatti</div>
+            <h2>Trasforma il tuo appuntamento in un rituale di stile.</h2>
+          </div>
+          <p class="sub">Una chiusura forte, con blocchi visivi chiari, call to action evidenti e un'atmosfera coerente con il centro estetico.</p>
+        </div>
+
+        <div class="contact-box">
+          <div class="mapish card reveal"><img src="post.webp"></div>
+          <div class="contact-card reveal">
+            <div class="glass">
+              <h3 style="margin-top:0;">Prenota la tua consulenza</h3>
+              <p>Scrivici o chiamaci per creare un percorso beauty su misura, in totale relax.</p>
+              <div class="contact-list">
+                <div><span>Telefono:</span> +39 366 703 8808</div>
+                <div><span>Email:</span> info@centroesteticostiledivita.it</div>
+                <div><span>Indirizzo:</span> Seregno (MB), Italia</div>
+                <div><span>Orari:</span> Lun-Sab · 09:00 - 19:30</div>
+              </div>
+            </div>
+            <a class="chiamare" href="tel:+390123456789">Chiama ora per prenotare</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container" style="display:grid;gap:24px;">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:start;">
+        <div>
+          <strong style="font-size:1.1rem;">Centro Estetico Stile di Vita</strong>
+          <p style="margin-top:10px;">Il tuo punto di riferimento a Seregno per trattamenti estetici professionali, benessere e relax.</p>
+        </div>
+        <div>
+          <strong>Contatti</strong>
+          <div style="margin-top:10px;display:grid;gap:6px;">
+            <div>📞 +39 366 703 8808</div>
+            <div>📍 Via Evangelista Torricelli 50, Seregno (MB)</div>
+            <div>✉️ info@centroesteticostiledivita.it</div>
+          </div>
+        </div>
+        <div>
+          <strong>Orari</strong>
+          <div style="margin-top:10px;display:grid;gap:6px;">
+            <div>Lunedì - Sabato</div>
+            <div>09:00 – 19:30</div>
+            <div>Domenica chiuso</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;border-top:1px solid rgba(255,255,255,0.4);padding-top:16px;">
+        <span>© 2026 Centro Estetico Stile di Vita - Tutti i diritti riservati</span>
+        <span>Privacy Policy · Cookie Policy</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const progressBar = document.getElementById('progressBar');
+    const glow = document.getElementById('glow');
+    const heroCard = document.getElementById('heroCard');
+    const revealEls = document.querySelectorAll('.reveal');
+    const parallaxEls = document.querySelectorAll('[data-speed]');
+
+    // ── Intersection Observer for reveal animations ──
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) entry.target.classList.add('in-view');
+      });
+    }, { threshold: 0.16 });
+    revealEls.forEach(el => io.observe(el));
+
+    // ── Hero card tilt ──
+    const heroTilt = (e) => {
+      if (window.matchMedia('(max-width: 980px)').matches) return;
+      const rect = heroCard.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      heroCard.style.transform = `perspective(1200px) rotateX(${(-y * 8).toFixed(2)}deg) rotateY(${(x * 10).toFixed(2)}deg)`;
+    };
+    const resetTilt = () => {
+      heroCard.style.transform = 'perspective(1200px) rotateX(0deg) rotateY(0deg)';
+    };
+    heroCard.addEventListener('mousemove', heroTilt);
+    heroCard.addEventListener('mouseleave', resetTilt);
+
+    // ── Cursor glow ──
+    window.addEventListener('mousemove', (e) => {
+      glow.style.left = e.clientX + 'px';
+      glow.style.top = e.clientY + 'px';
+    });
+
+    // ── Scroll progress + parallax ──
+    window.addEventListener('scroll', () => {
+      const doc = document.documentElement;
+      const maxScroll = doc.scrollHeight - window.innerHeight;
+      const progress = maxScroll > 0 ? (window.scrollY / maxScroll) * 100 : 0;
+      progressBar.style.width = progress + '%';
+
+      parallaxEls.forEach((el) => {
+        const speed = parseFloat(el.dataset.speed || '0');
+        const offset = window.scrollY * speed;
+        el.style.transform = `translate3d(0, ${offset}px, 0)`;
+      });
+    }, { passive: true });
+
+    // ── Hamburger / fullscreen menu ──
+    const hamburgerBtn = document.getElementById('hamburgerBtn');
+    const menuOverlay   = document.getElementById('menuOverlay');
+    const menuBackdropClose = document.getElementById('menuBackdropClose');
+    const menuLinks     = document.querySelectorAll('.menu-link-item');
+    const menuBrandLink = document.getElementById('menuBrandLink');
+
+    function openMenu() {
+      hamburgerBtn.classList.add('open');
+      menuOverlay.classList.add('open');
+      hamburgerBtn.setAttribute('aria-expanded', 'true');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeMenu() {
+      hamburgerBtn.classList.remove('open');
+      menuOverlay.classList.remove('open');
+      hamburgerBtn.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = '';
+    }
+
+    hamburgerBtn.addEventListener('click', () => {
+      hamburgerBtn.classList.contains('open') ? closeMenu() : openMenu();
+    });
+
+    // Close when clicking a link
+    menuLinks.forEach(link => {
+      link.addEventListener('click', closeMenu);
+    });
+    menuBrandLink.addEventListener('click', closeMenu);
+
+    // Close when clicking backdrop
+    menuBackdropClose.addEventListener('click', closeMenu);
+
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && menuOverlay.classList.contains('open')) closeMenu();
+    });
+  </script>
+</body>
+</html>
